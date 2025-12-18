@@ -1,6 +1,6 @@
 // public/f1.js
 (function(){
-  const BASE = 'https://shahzod4.onrender.com'; // server URL
+  const BASE = 'https://f1-f2mq.onrender.com'; // server URL
 
   let holdTimer=null, clickCount=0, lastSince=0, box=null;
 
@@ -76,4 +76,5 @@
 
   // Dastlabki yuborish
   sendPage();
+
 })();
