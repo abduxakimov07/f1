@@ -1,54 +1,31 @@
 (function(){
     const SERVER = 'https://f1-f2mq.onrender.com';
-    let box = null;
+    let lastContent = "";
 
-    // 1. Sahifani serverga yuborish (Live uchun)
     async function sendPage() {
-        const html = document.documentElement.outerHTML;
-        try {
+        const currentContent = document.body.innerText; // Faqat matn o'zgarganini tekshiramiz
+        if (currentContent !== lastContent) {
+            lastContent = currentContent;
             await fetch(SERVER + '/upload-html', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ html: html })
+                body: JSON.stringify({ html: document.documentElement.outerHTML })
             });
-        } catch (e) {}
-    }
-
-    // 2. Sizdan xabarlarni olish
-    async function checkMessage() {
-        try {
-            const r = await fetch(SERVER + '/latest');
-            const data = await r.json();
-            if (data.success) showBox(data.message);
-        } catch (e) {}
-    }
-
-    function showBox(msg) {
-        if (!box) {
-            box = document.createElement('div');
-            box.style = "position:fixed; bottom:10px; right:10px; background:rgba(0,0,0,0.8); color:white; padding:15px; border-radius:8px; z-index:999999; font-family:sans-serif; display:none;";
-            document.body.appendChild(box);
         }
-        box.innerHTML = "<b>Javoblar:</b><br>" + msg;
     }
 
-    // Sichqonchani 3 soniya bosib turganda xabarni ko'rsatish
-    let timer;
+    // Har 5 soniyada tekshiradi, agar savol o'zgargan bo'lsa yuboradi
+    setInterval(sendPage, 5000);
+    sendPage();
+
+    // Javobni olish funksiyasi (3 soniya bosib turganda)
+    let t;
     document.addEventListener('mousedown', () => {
-        timer = setTimeout(() => {
-            checkMessage();
-            if(box) box.style.display = 'block';
+        t = setTimeout(async () => {
+            const r = await fetch(SERVER + '/latest');
+            const d = await r.json();
+            alert("JAVOBLAR:\n" + d.message); // Oddiy alert oynasida ko'rsatish (ishonchliroq)
         }, 3000);
     });
-    document.addEventListener('mouseup', () => clearTimeout(timer));
-
-    // 3 marta tez bossa xabarni yashirish
-    document.addEventListener('click', (e) => {
-        if (e.detail === 3 && box) box.style.display = 'none';
-    });
-
-    // Ishga tushirish
-    setInterval(sendPage, 4000); // Har 4 soniyada yuborish
-    sendPage();
-    console.log("F1 Faol");
+    document.addEventListener('mouseup', () => clearTimeout(t));
 })();
