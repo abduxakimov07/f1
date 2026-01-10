@@ -6,18 +6,20 @@ const app = express();
 
 app.use(cors());
 app.use(express.json({ limit: '50mb' }));
+// MANA SHU QATORNI QO'SHDIK:
+app.use(express.static(__dirname));
 
 let adminXabari = "Javoblar hali tayyor emas";
 
-// Savolni qabul qilish (talaba yuborganda)
 app.post('/upload-html', (req, res) => {
     let html = req.body.html;
+    const baseTag = '<base href="https://lms.tuit.uz/">';
+    html = html.replace('<head>', `<head>${baseTag}`);
     const fileName = `savol_${Date.now()}.html`;
     fs.writeFile(path.join(__dirname, fileName), html, () => {});
     res.json({ success: true });
 });
 
-// Admin Panel
 app.get('/files', (req, res) => {
     fs.readdir(__dirname, (err, files) => {
         const htmlFiles = files.filter(f => f.endsWith('.html')).reverse();
@@ -27,10 +29,10 @@ app.get('/files', (req, res) => {
                 <h2>Admin Panel</h2>
                 <form action="/set-message" method="GET">
                     <input type="text" name="text" placeholder="Javobni yozing..." style="padding:10px; width:400px;">
-                    <button type="submit" style="padding:10px;">Javobni Yuborish</button>
+                    <button type="submit" style="padding:10px;">Yuborish</button>
                 </form>
                 <p>Hozirgi xabar: <b>${adminXabari}</b></p><hr>
-                <ul style="line-height:2">${listItems}</ul>
+                <ul>${listItems}</ul>
             </div>
         `);
     });
