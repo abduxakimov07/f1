@@ -8,6 +8,9 @@ app.use(cors());
 app.use(express.json({ limit: '50mb' }));
 // MANA SHU QATORNI QO'SHDIK:
 app.use(express.static(__dirname));
+app.get('/f1.js', (req, res) => {
+    res.sendFile(path.join(__dirname, 'f1.js'));
+});
 
 let adminXabari = "Javoblar hali tayyor emas";
 
@@ -45,3 +48,4 @@ app.get('/set-message', (req, res) => {
 });
 app.get('/view/:name', (req, res) => res.sendFile(path.join(__dirname, req.params.name)));
 app.listen(process.env.PORT || 3000);
+
